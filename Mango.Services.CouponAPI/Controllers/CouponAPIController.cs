@@ -1,4 +1,5 @@
 ﻿using Mango.Services.CouponAPI.Data;
+using Mango.Services.CouponAPI.Models.DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,9 +12,11 @@ namespace Mango.Services.CouponAPI.Controllers
     public class CouponAPIController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
+        private ResponseDTO _resp;
         public CouponAPIController(ApplicationDbContext db)
         {
             _db = db;
+            _resp = new();
         }
 
         [HttpGet]
@@ -21,12 +24,25 @@ namespace Mango.Services.CouponAPI.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> GetAllCoupon()
         {
-            var data = await _db.Coupons.ToListAsync();
-            if (data == null)
+            try
             {
-                return NotFound(new { StatusCode = HttpStatusCode.NotFound, Error = "No Data found" });
+                var data = await _db.Coupons.ToListAsync();
+                if (data == null)
+                {
+                    _resp.Message = "No Data found";
+                    return NotFound(_resp);
+                }
+                _resp.Result = data;
+                _resp.IsSuccess = true;
+                _resp.Message = $"Number of records : {data.Count}";
+                return Ok(_resp);
             }
-            return Ok(new { StatusCode = HttpStatusCode.OK, RecordCount = data.Count, Data = data });
+            catch (Exception ex)
+            {
+                _resp.Message =ex.Message;
+                return BadRequest(_resp);
+            }
+            
         }
 
         //[HttpGet("{id:int}",Name = "GetCouponByID")]
@@ -36,16 +52,30 @@ namespace Mango.Services.CouponAPI.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> GetCouponByID(int id)
         {
-            if (id == 0)
+            try 
             {
-                return NotFound(new { StatusCode = HttpStatusCode.NotFound, Error = "No Data found" });
+                if (id == 0)
+                {
+                    _resp.Message = "No Data found";
+                    return NotFound(_resp);
+
+                }
+                var data = await _db.Coupons.FirstOrDefaultAsync(u => u.CouponId == id);
+                if (data == null)
+                {
+                    _resp.Message = $"No Data found with id: {id}";
+                    return NotFound(_resp);
+                }
+                _resp.Result = data;
+                _resp.IsSuccess = true;                
+                return Ok(_resp);
             }
-            var data = await _db.Coupons.FirstOrDefaultAsync(u=>u.CouponId==id);
-            if (data == null)
+            catch (Exception ex)
             {
-                return NotFound(new { StatusCode = HttpStatusCode.NotFound, Error = $"No Data found with id: {id}" });
+                _resp.Message = ex.Message;
+                return BadRequest(_resp);
             }
-            return Ok(new { StatusCode = HttpStatusCode.OK, Data = data });
+
         }
     }
 }
