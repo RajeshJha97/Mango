@@ -1,9 +1,12 @@
-﻿using Mango.Services.CouponAPI.Data;
+﻿using AutoMapper;
+using Mango.Services.CouponAPI.Data;
+using Mango.Services.CouponAPI.Models;
 using Mango.Services.CouponAPI.Models.DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
+using static Azure.Core.HttpHeader;
 
 namespace Mango.Services.CouponAPI.Controllers
 {
@@ -11,14 +14,22 @@ namespace Mango.Services.CouponAPI.Controllers
     [ApiController]
     public class CouponAPIController : ControllerBase
     {
+        #region private variables
         private readonly ApplicationDbContext _db;
         private ResponseDTO _resp;
-        public CouponAPIController(ApplicationDbContext db)
+        private readonly IMapper _mapper;
+        #endregion
+
+        #region Constructor
+        public CouponAPIController(ApplicationDbContext db,IMapper mapper)
         {
             _db = db;
             _resp = new();
+            _mapper = mapper;
         }
+        #endregion
 
+        #region GetAllCoupon
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -45,9 +56,12 @@ namespace Mango.Services.CouponAPI.Controllers
             
         }
 
+        #endregion
+
+        #region GetCouponByID
         //[HttpGet("{id:int}",Name = "GetCouponByID")]
         [HttpGet]
-        [Route("{id:int}")]
+        [Route("{id:int}",Name = "GetCouponByID")]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> GetCouponByID(int id)
@@ -77,5 +91,121 @@ namespace Mango.Services.CouponAPI.Controllers
             }
 
         }
+
+        #endregion
+
+        #region CreateCoupon
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        public async Task<ActionResult<ResponseDTO>> CreateCoupon([FromBody] CouponCreateDTO coupon)
+        {
+            try 
+            {
+                if (coupon is null)
+                {
+                    _resp.Message = "Data is null";
+                    return BadRequest(_resp);
+                }
+                //checking for duplicate coupon
+                if (await _db.Coupons.AsNoTracking().FirstOrDefaultAsync(u => u.CouponCode == coupon.CouponCode) != null)
+                {
+                    _resp.Message = $"Coupon code: {coupon.CouponCode} already exist. Please add a unique coupon code.";
+                    return BadRequest(_resp);
+                }
+                //mapping
+                Coupon model=_mapper.Map<Coupon>(coupon);
+                model.CreatedDate = DateTime.Now;
+                await _db.AddAsync(model);
+                await _db.SaveChangesAsync();
+                return CreatedAtRoute("GetCouponByID", new { id = model.CouponId }, _resp);
+            }
+            catch (Exception ex) 
+            {
+                _resp.Message = ex.Message;
+                return BadRequest(_resp);
+            }
+            
+        }
+        #endregion
+
+        #region UpdateCoupon
+        [HttpPut]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        public async Task<ActionResult<ResponseDTO>> UpdateCoupon([FromBody] CouponUpdateDTO coupon)
+        {
+            try
+            {
+                if (coupon is null)
+                {
+                    _resp.Message = "Data is null";
+                    return BadRequest(_resp);
+                }
+                Coupon data = await _db.Coupons.AsNoTracking().FirstAsync(u => u.CouponId == coupon.CouponId);
+                //checking for duplicate coupon
+                if (data is null)
+                {
+                    _resp.Message = $"Coupon code: {coupon.CouponId} doesn't exist. Please provide a valid data.";
+                    return BadRequest(_resp);
+                }
+                
+
+                //mapping
+                Coupon model = _mapper.Map<Coupon>(coupon);
+                model.CreatedDate = data.CreatedDate;
+                model.LastUpdatedDate=DateTime.Now;
+                 _db.Update(model);
+                await _db.SaveChangesAsync();
+                _resp.IsSuccess = true;
+                _resp.Message = $"Coupon: {coupon.CouponCode} updated successfully";
+                return Ok(_resp);
+            }
+            catch (Exception ex)
+            {
+                _resp.Message = ex.Message;
+                return BadRequest(_resp);
+            }
+
+        }
+        #endregion
+
+        #region DeleteCoupon
+        [HttpDelete]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<ResponseDTO>> DeleteCoupon(int id)
+        {
+            try
+            {
+                if (id==0)
+                {
+                    _resp.Message = $"CouponId : {id} doesn't exist.";
+                    return BadRequest(_resp);
+                }
+                Coupon data = await _db.Coupons.AsNoTracking().FirstAsync(u => u.CouponId == id);
+                //checking for duplicate coupon
+                if (data is null)
+                {
+                    _resp.Message = $"Coupon code: {id} doesn't exist. Please provide a valid coupon id.";
+                    return BadRequest(_resp);
+                }
+
+
+                //mapping
+                _db.Remove(data);
+                await _db.SaveChangesAsync();
+                _resp.IsSuccess = true;
+                _resp.Message = $"Coupon: {data.CouponCode} deleted successfully";
+                return Ok(_resp);
+            }
+            catch (Exception ex)
+            {
+                _resp.Message = ex.Message;
+                return BadRequest(_resp);
+            }
+        }
+        #endregion
+
     }
 }

@@ -2,12 +2,12 @@
 
 namespace Mango.Services.CouponAPI.Models.DTO
 {
-    public class CouponDTO
+    public class CouponUpdateDTO
     {
         [Required]
         public int CouponId { get; set; }
         [Required]
-        public string CouponCode { get; set; }
+        public string CouponCode { get; set; }=string.Empty;
         [Required]
         public double DiscountAmount { get; set; }
         [Required]
