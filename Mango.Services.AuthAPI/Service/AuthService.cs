@@ -9,21 +9,31 @@ namespace Mango.Services.AuthAPI.Service
 {
     public class AuthService : IAuthService
     {
+        #region PrivateVariable
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
 
+        #endregion
+
+        #region Constructor
         public AuthService(ApplicationDbContext db,UserManager<ApplicationUser> userManager, RoleManager<IdentityRole>roleManager)
         {
            _db = db;
             _userManager = userManager;
             _roleManager = roleManager;
         }
+        #endregion
+
+        #region LoginService
         public Task<LoginResponseDTO> Login(LoginRequestDTO loginRequestDto)
         {
             throw new NotImplementedException();
         }
 
+        #endregion
+
+        #region RegisterService
         public async Task<string> Register(RegistrationRequestDTO registrationRequestDto)
         {
             ApplicationUser user = new ApplicationUser()
@@ -63,5 +73,6 @@ namespace Mango.Services.AuthAPI.Service
             }
             return "error encountered";
         }
+        #endregion
     }
 }
