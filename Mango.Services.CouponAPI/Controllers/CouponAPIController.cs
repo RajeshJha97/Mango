@@ -18,14 +18,16 @@ namespace Mango.Services.CouponAPI.Controllers
         private readonly ApplicationDbContext _db;
         private ResponseDTO _resp;
         private readonly IMapper _mapper;
+        private ILogger<CouponAPIController> _logger;
         #endregion
 
         #region Constructor
-        public CouponAPIController(ApplicationDbContext db,IMapper mapper)
+        public CouponAPIController(ApplicationDbContext db,IMapper mapper,ILogger<CouponAPIController>logger)
         {
             _db = db;
             _resp = new();
             _mapper = mapper;
+            _logger = logger;
         }
         #endregion
 
@@ -37,15 +39,18 @@ namespace Mango.Services.CouponAPI.Controllers
         {
             try
             {
+                _logger.LogInformation("Retrieving coupons from database");
                 var data = await _db.Coupons.ToListAsync();
                 if (data == null)
                 {
                     _resp.Message = "No Data found";
                     return NotFound(_resp);
                 }
+                _logger.LogInformation("All coupons retrieved");
                 _resp.Result = data;
                 _resp.IsSuccess = true;
                 _resp.Message = $"Number of records : {data.Count}";
+                _logger.LogInformation("Mapping completed");
                 return Ok(_resp);
             }
             catch (Exception ex)
