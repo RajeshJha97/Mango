@@ -2,6 +2,7 @@
 using Mango.Services.CouponAPI.Data;
 using Mango.Services.CouponAPI.Models;
 using Mango.Services.CouponAPI.Models.DTO;
+using Mango.Services.CouponAPI.Service.IService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,15 +20,17 @@ namespace Mango.Services.CouponAPI.Controllers
         private ResponseDTO _resp;
         private readonly IMapper _mapper;
         private ILogger<CouponAPIController> _logger;
+        private readonly ICouponService _couponService;
         #endregion
 
         #region Constructor
-        public CouponAPIController(ApplicationDbContext db,IMapper mapper,ILogger<CouponAPIController>logger)
+        public CouponAPIController(ApplicationDbContext db,IMapper mapper,ILogger<CouponAPIController>logger, ICouponService couponService)
         {
             _db = db;
             _resp = new();
             _mapper = mapper;
             _logger = logger;
+            _couponService= couponService;
         }
         #endregion
 
@@ -35,22 +38,19 @@ namespace Mango.Services.CouponAPI.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> GetAllCoupon()
+        public async Task<ActionResult<ResponseDTO>> GetAllCoupon()
         {
             try
             {
-                _logger.LogInformation("Retrieving coupons from database");
-                var data = await _db.Coupons.ToListAsync();
-                if (data == null)
+               var coupons=await _couponService.GetAllCoupons();
+                if (coupons == null)
                 {
-                    _resp.Message = "No Data found";
-                    return NotFound(_resp);
+                    _resp.Message = "No record found";
+                    return BadRequest(_resp);
                 }
-                _logger.LogInformation("All coupons retrieved");
-                _resp.Result = data;
                 _resp.IsSuccess = true;
-                _resp.Message = $"Number of records : {data.Count}";
-                _logger.LogInformation("Mapping completed");
+                _resp.Result = coupons;
+                _logger.LogInformation("Data fetched");
                 return Ok(_resp);
             }
             catch (Exception ex)
@@ -79,10 +79,10 @@ namespace Mango.Services.CouponAPI.Controllers
                     return NotFound(_resp);
 
                 }
-                var data = await _db.Coupons.FirstOrDefaultAsync(u => u.CouponId == id);
+                var data = await _couponService.GetCoupons(id);
                 if (data == null)
                 {
-                    _resp.Message = $"No Data found with id: {id}";
+                    _resp.Message = $"No coupon found with id: {id}";
                     return NotFound(_resp);
                 }
                 _resp.Result = data;
@@ -112,18 +112,15 @@ namespace Mango.Services.CouponAPI.Controllers
                     _resp.Message = "Data is null";
                     return BadRequest(_resp);
                 }
-                //checking for duplicate coupon
-                if (await _db.Coupons.AsNoTracking().FirstOrDefaultAsync(u => u.CouponCode == coupon.CouponCode) != null)
+               var responseFromCouponCreation=await _couponService.CreateCoupon(coupon);
+                if (int.TryParse(responseFromCouponCreation, out int cId)) //here we are getting response id as a respon from db we are trying to convert into int if we get any error we will get string as a reponse which will not be passed to tryparse
                 {
-                    _resp.Message = $"Coupon code: {coupon.CouponCode} already exist. Please add a unique coupon code.";
-                    return BadRequest(_resp);
+                    _resp.IsSuccess= true;
+                    _logger.LogInformation($"Coupon created at:https://localhost:7001/api/CouponAPI/GetCouponByID/{cId} ");
+                    return CreatedAtRoute("GetCouponByID", new { id =  cId}, _resp);
                 }
-                //mapping
-                Coupon model=_mapper.Map<Coupon>(coupon);
-                model.CreatedDate = DateTime.Now;
-                await _db.AddAsync(model);
-                await _db.SaveChangesAsync();
-                return CreatedAtRoute("GetCouponByID", new { id = model.CouponId }, _resp);
+                _resp.Message = responseFromCouponCreation;
+                return BadRequest(_resp);
             }
             catch (Exception ex) 
             {
