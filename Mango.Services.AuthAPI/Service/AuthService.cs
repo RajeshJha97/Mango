@@ -4,6 +4,7 @@ using Mango.Services.AuthAPI.Models.DTO;
 using Mango.Services.AuthAPI.Service.IService;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Mango.Services.AuthAPI.Service
 {
@@ -26,9 +27,28 @@ namespace Mango.Services.AuthAPI.Service
         #endregion
 
         #region LoginService
-        public Task<LoginResponseDTO> Login(LoginRequestDTO loginRequestDto)
+        public async Task<LoginResponseDTO> Login(LoginRequestDTO loginRequestDto)
         {
-            throw new NotImplementedException();
+            var user = await _db.ApplicationUsers.FirstAsync(u => u.UserName.ToLower() == loginRequestDto.UserName.ToLower());
+            bool isValid = await _userManager.CheckPasswordAsync(user, loginRequestDto.Password);
+            if (user == null || isValid == false)
+            {
+                return new LoginResponseDTO() { User=null,Token=""};
+            }
+
+            UserDTO userDTO = new UserDTO()
+            {
+                ID = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber
+            };
+
+            //token part have to impement
+            return new LoginResponseDTO() { 
+                User=userDTO,
+                Token="Have to work on the tokens"
+            };
         }
 
         #endregion

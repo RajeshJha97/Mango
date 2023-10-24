@@ -55,9 +55,23 @@ namespace Mango.Services.AuthAPI.Controllers
 
         #region Login
         [HttpPost("login")]
-        public async Task<IActionResult> Login()
+        public async Task<IActionResult> Login(LoginRequestDTO loginRequestDto)
         {
-            return Ok();
+            if (loginRequestDto == null)
+            {
+                _resp.Message = "Please add user name and password";
+                return BadRequest(_resp);
+            }
+           var authResponse= await _auth.Login(loginRequestDto);
+            if (authResponse.User == null || authResponse.Token == null)
+            {
+                _resp.Message = "Incorrect username and password";
+                return BadRequest(_resp);
+            }
+            _resp.Result = authResponse;
+            _resp.IsSuccess = true;
+            _resp.Message = "Logged In";
+            return Ok(_resp);
         }
         #endregion
     }
