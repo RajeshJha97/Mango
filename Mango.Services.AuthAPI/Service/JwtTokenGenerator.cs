@@ -1,12 +1,13 @@
 ﻿using Mango.Services.AuthAPI.Models;
+using Mango.Services.AuthAPI.Service.IService;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace Mango.Services.AuthAPI.Service.IService
+namespace Mango.Services.AuthAPI.Service
 {
-    
+
     public class JwtTokenGenerator : IJwtTokenGenerator
     {
         private readonly IConfiguration _config;
@@ -21,7 +22,7 @@ namespace Mango.Services.AuthAPI.Service.IService
             var apiSettingConfig = _config.GetSection("ApiSettings:JwtOptions");
             var key = Encoding.ASCII.GetBytes(apiSettingConfig.GetValue<string>("SecretKey"));
             var issuer = apiSettingConfig.GetValue<string>("Issuer");
-            var audience= apiSettingConfig.GetValue<string>("Audience");
+            var audience = apiSettingConfig.GetValue<string>("Audience");
 
             //step 1 create a list of claim u want in token
             var claimsList = new List<Claim>
