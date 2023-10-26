@@ -14,41 +14,63 @@ namespace Mango.Services.AuthAPI.Service
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IJwtTokenGenerator _tokenGenerator;
+        private readonly ILogger<AuthService> _logger;
 
         #endregion
 
         #region Constructor
-        public AuthService(ApplicationDbContext db,UserManager<ApplicationUser> userManager, RoleManager<IdentityRole>roleManager)
+        public AuthService(ApplicationDbContext db,UserManager<ApplicationUser> userManager, RoleManager<IdentityRole>roleManager, 
+            IJwtTokenGenerator tokenGenerator, ILogger<AuthService> logger)
         {
-           _db = db;
+             _db = db;
             _userManager = userManager;
             _roleManager = roleManager;
+            _tokenGenerator = tokenGenerator;
+            _logger = logger;
         }
         #endregion
 
         #region LoginService
         public async Task<LoginResponseDTO> Login(LoginRequestDTO loginRequestDto)
         {
-            var user = await _db.ApplicationUsers.FirstAsync(u => u.UserName.ToLower() == loginRequestDto.UserName.ToLower());
-            bool isValid = await _userManager.CheckPasswordAsync(user, loginRequestDto.Password);
-            if (user == null || isValid == false)
+            try
             {
-                return new LoginResponseDTO() { User=null,Token=""};
+                var user = await _db.ApplicationUsers.FirstAsync(u => u.UserName.ToLower() == loginRequestDto.UserName.ToLower());
+
+                bool isValid = await _userManager.CheckPasswordAsync(user, loginRequestDto.Password);
+                if (user == null || isValid == false)
+                {
+                    return new LoginResponseDTO() { User = null, Token = "" };
+                }
+
+                UserDTO userDTO = new UserDTO()
+                {
+                    ID = user.Id,
+                    Name = user.Name,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber
+                };
+                //if user found then generate jwt token
+                string token = _tokenGenerator.GenerateToken(user);
+
+                //token generation have to work
+                return new LoginResponseDTO()
+                {
+                    User = userDTO,
+                    Token = token
+                };
             }
-
-            UserDTO userDTO = new UserDTO()
+            catch (Exception ex)
             {
-                ID = user.Id,
-                Name = user.Name,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber
-            };
-
-            //token generation have to work
-            return new LoginResponseDTO() { 
-                User=userDTO,
-                Token="Have to work on the tokens"
-            };
+                _logger.LogError($"Exception out: {ex.Message}");
+                return new LoginResponseDTO()
+                {
+                    User = null,
+                    Token = ""
+                };
+            }
+          
         }
 
         #endregion
