@@ -18,17 +18,17 @@ namespace Mango.Services.CouponAPI.Controllers
         #region private variables
         private readonly ApplicationDbContext _db;
         private ResponseDTO _resp;
-        private readonly IMapper _mapper;
+       
         private ILogger<CouponAPIController> _logger;
         private readonly ICouponService _couponService;
         #endregion
 
         #region Constructor
-        public CouponAPIController(ApplicationDbContext db,IMapper mapper,ILogger<CouponAPIController>logger, ICouponService couponService)
+        public CouponAPIController(ApplicationDbContext db,ILogger<CouponAPIController>logger, ICouponService couponService)
         {
             _db = db;
             _resp = new();
-            _mapper = mapper;
+            
             _logger = logger;
             _couponService= couponService;
         }
@@ -145,21 +145,21 @@ namespace Mango.Services.CouponAPI.Controllers
                     return BadRequest(_resp);
                 }
                 Coupon data = await _db.Coupons.AsNoTracking().FirstAsync(u => u.CouponId == coupon.CouponId);
-                //checking for duplicate coupon
+                
                 if (data is null)
                 {
                     _resp.Message = $"Coupon code: {coupon.CouponId} doesn't exist. Please provide a valid data.";
                     return BadRequest(_resp);
                 }
-                
 
-                //mapping
-                Coupon model = _mapper.Map<Coupon>(coupon);
-                model.CreatedDate = data.CreatedDate;
-                model.LastUpdatedDate=DateTime.Now;
-                 _db.Update(model);
-                await _db.SaveChangesAsync();
+
+                var response = await _couponService.UpdateCoupon(coupon);
+                if (response is null)
+                {
+                    return BadRequest(_resp);
+                }
                 _resp.IsSuccess = true;
+                _resp.Result = response;
                 _resp.Message = $"Coupon: {coupon.CouponCode} updated successfully";
                 return Ok(_resp);
             }
@@ -185,20 +185,14 @@ namespace Mango.Services.CouponAPI.Controllers
                     _resp.Message = $"CouponId : {id} doesn't exist.";
                     return BadRequest(_resp);
                 }
-                Coupon data = await _db.Coupons.AsNoTracking().FirstAsync(u => u.CouponId == id);
-                //checking for duplicate coupon
-                if (data is null)
+                string response=await _couponService.DeleteCoupon(id);
+                if (!string.IsNullOrEmpty(response))
                 {
-                    _resp.Message = $"Coupon code: {id} doesn't exist. Please provide a valid coupon id.";
+                    _resp.Message =response;
                     return BadRequest(_resp);
                 }
-
-
-                //mapping
-                _db.Remove(data);
-                await _db.SaveChangesAsync();
                 _resp.IsSuccess = true;
-                _resp.Message = $"Coupon: {data.CouponCode} deleted successfully";
+                _resp.Message = $"Coupon: {id} deleted successfully";
                 return Ok(_resp);
             }
             catch (Exception ex)

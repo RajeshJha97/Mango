@@ -46,9 +46,26 @@ namespace Mango.Services.CouponAPI.Service
 
         }
 
-        public Task DeleteCoupon(int couponId)
+        public async Task<string> DeleteCoupon(int couponId)
         {
-            throw new NotImplementedException();
+            try 
+            {
+              var coupon= await _db.Coupons.FirstOrDefaultAsync(u=>u.CouponId == couponId);
+                if (coupon != null) 
+                {
+                   _db.Remove(coupon);
+                    await _db.SaveChangesAsync();
+                    return "";
+                }
+                _logger.LogWarning($"No coupon is available with coupon Id:{couponId}");
+
+                return $"No coupon is available with coupon Id:{couponId}";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return $"Exception out: {ex.Message}";
+            }
         }
 
         public async Task<IEnumerable<Coupon>> GetAllCoupons()
@@ -92,9 +109,23 @@ namespace Mango.Services.CouponAPI.Service
             }
         }
 
-        public Task<Coupon> UpdateCoupon(CouponUpdateDTO coupon)
+        public async Task<Coupon> UpdateCoupon(CouponUpdateDTO coupon)
         {
-            throw new NotImplementedException();
+            try 
+            {
+                var model=_mapper.Map<Coupon>(coupon);
+                Coupon data = await _db.Coupons.AsNoTracking().FirstAsync(u => u.CouponId == coupon.CouponId);
+                model.CreatedDate=data.CreatedDate;
+                model.LastUpdatedDate=DateTime.Now;
+                _db.Update(model);
+                await _db.SaveChangesAsync();
+                return model;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Exception out: {ex.Message}");
+                return null;
+            }
         }
     }
 }
