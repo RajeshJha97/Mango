@@ -44,7 +44,7 @@ namespace Mango.Services.AuthAPI.Service
                 PhoneNumber = user.PhoneNumber
             };
 
-            //token part have to impement
+            //token generation have to work
             return new LoginResponseDTO() { 
                 User=userDTO,
                 Token="Have to work on the tokens"
