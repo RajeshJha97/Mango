@@ -74,5 +74,32 @@ namespace Mango.Services.AuthAPI.Controllers
             return Ok(_resp);
         }
         #endregion
+
+        #region AssignRole
+        [HttpPost]
+        [Route("AssignRole")]
+        public async Task<IActionResult> AssignRole(string email, string roleName)
+        {
+            if (email is null || roleName is null)
+            {
+                return BadRequest(new
+                {
+                    Message="Email and Role is mandatory"
+                });
+            }
+            bool assignRole=await _auth.AssignRole(email, roleName);
+            if (assignRole) 
+            {
+                return Ok(new 
+                { 
+                    Message=$"Email : {email} assigned with the role : {roleName}"
+                });
+            }
+            return BadRequest(new 
+            {
+                Message =$"No User found with the Email: {email}"
+            });
+        }
+        #endregion
     }
 }
