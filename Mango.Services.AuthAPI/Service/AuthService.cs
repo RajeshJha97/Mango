@@ -4,6 +4,7 @@ using Mango.Services.AuthAPI.Models.DTO;
 using Mango.Services.AuthAPI.Service.IService;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Mango.Services.AuthAPI.Service
@@ -29,7 +30,8 @@ namespace Mango.Services.AuthAPI.Service
             _tokenGenerator = tokenGenerator;
             _logger = logger;
         }
-        #endregion
+
+       #endregion
 
         #region LoginService
         public async Task<LoginResponseDTO> Login(LoginRequestDTO loginRequestDto)
@@ -114,6 +116,24 @@ namespace Mango.Services.AuthAPI.Service
 
             }
             return "error encountered";
+        }
+        #endregion
+
+        #region AssignRole       
+        public async Task<bool> AssignRole(string email, string roleName)
+        {
+            var user = _db.ApplicationUsers.FirstOrDefault(u => u.Email.ToLower() == email.ToLower());
+            if (user != null)
+            {
+                if(!_roleManager.RoleExistsAsync(roleName).GetAwaiter().GetResult()) //GetAwaiter().GetResult()--> we don't need to await the call, similar to the await keyword
+                {
+                    //create a new role if doesn't exist
+                    _roleManager.CreateAsync(new IdentityRole(roleName)).GetAwaiter().GetResult();
+                }
+                await _userManager.AddToRoleAsync(user,roleName);
+                return true;
+            }
+            return false;
         }
         #endregion
     }
