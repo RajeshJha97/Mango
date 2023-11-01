@@ -54,7 +54,8 @@ namespace Mango.Services.AuthAPI.Service
                     PhoneNumber = user.PhoneNumber
                 };
                 //if user found then generate jwt token
-                string token = _tokenGenerator.GenerateToken(user);
+                var roles = await _userManager.GetRolesAsync(user);
+                string token = _tokenGenerator.GenerateToken(user,roles);
 
                 //token generation have to work
                 return new LoginResponseDTO()
