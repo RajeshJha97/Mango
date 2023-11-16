@@ -1,5 +1,6 @@
 ﻿using Mango.Services.AuthAPI.Models.DTO;
 using Mango.Services.AuthAPI.Service.IService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,6 +8,7 @@ namespace Mango.Services.AuthAPI.Controllers
 {
     [Route("api/Auth")]
     [ApiController]
+    
     public class AuthAPIController : ControllerBase
     {
         #region PrivateVariables
@@ -78,6 +80,8 @@ namespace Mango.Services.AuthAPI.Controllers
         #region AssignRole
         [HttpPost]
         [Route("AssignRole")]
+        [Authorize(Roles = "MasterAdmin")]
+        
         public async Task<IActionResult> AssignRole(string email, string roleName)
         {
             if (email is null || roleName is null)

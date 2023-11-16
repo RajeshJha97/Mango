@@ -3,6 +3,7 @@ using Mango.Services.CouponAPI.Data;
 using Mango.Services.CouponAPI.Models;
 using Mango.Services.CouponAPI.Models.DTO;
 using Mango.Services.CouponAPI.Service.IService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ namespace Mango.Services.CouponAPI.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class CouponAPIController : ControllerBase
     {
         #region private variables
@@ -38,6 +40,7 @@ namespace Mango.Services.CouponAPI.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [Authorize(Roles = "Admin,MasterAdmin,Developer")]
         public async Task<ActionResult<ResponseDTO>> GetAllCoupon()
         {
             try
@@ -69,6 +72,7 @@ namespace Mango.Services.CouponAPI.Controllers
         [Route("{id:int}",Name = "GetCouponByID")]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [AllowAnonymous]
         public async Task<ActionResult> GetCouponByID(int id)
         {
             try 
@@ -103,6 +107,7 @@ namespace Mango.Services.CouponAPI.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status201Created)]
+        [Authorize(Roles ="Admin,MasterAdmin")]
         public async Task<ActionResult<ResponseDTO>> CreateCoupon([FromBody] CouponCreateDTO coupon)
         {
             try 
@@ -135,6 +140,7 @@ namespace Mango.Services.CouponAPI.Controllers
         [HttpPut]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status201Created)]
+        [Authorize(Roles = "Admin,MasterAdmin")]
         public async Task<ActionResult<ResponseDTO>> UpdateCoupon([FromBody] CouponUpdateDTO coupon)
         {
             try
@@ -176,6 +182,7 @@ namespace Mango.Services.CouponAPI.Controllers
         [HttpDelete]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [Authorize(Roles = "MasterAdmin")]
         public async Task<ActionResult<ResponseDTO>> DeleteCoupon(int id)
         {
             try
