@@ -40,7 +40,7 @@ namespace Mango.Services.CouponAPI.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [Authorize(Roles = "Admin,MasterAdmin,Developer")]
+        [Authorize(Roles = "Admin,MasterAdmin,Customer")]
         public async Task<ActionResult<ResponseDTO>> GetAllCoupon()
         {
             try
@@ -182,7 +182,7 @@ namespace Mango.Services.CouponAPI.Controllers
         [HttpDelete]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [Authorize(Roles = "MasterAdmin")]
+        [Authorize(Roles = "Admin,MasterAdmin")]
         public async Task<ActionResult<ResponseDTO>> DeleteCoupon(int id)
         {
             try

@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /Mango.Services.AuthAPI/appsettings.Development.json
 /Mango.Services.CouponAPI/appsettings.Development.json
+/Secrets.json
