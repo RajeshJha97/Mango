@@ -1,5 +1,6 @@
 ﻿using Mango.Services.ProductAPI.Models.DTO;
 using Mango.Services.ProductAPI.Service.IService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,6 +8,7 @@ namespace Mango.Services.ProductAPI.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class ProductAPIController : ControllerBase
     {
         #region PrivateMember
@@ -29,6 +31,7 @@ namespace Mango.Services.ProductAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [Authorize(Roles = "Admin,MasterAdmin,Customer")]
         public async Task<ActionResult<Response>> GetAllProducts()
         {
             try 
@@ -62,6 +65,7 @@ namespace Mango.Services.ProductAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [AllowAnonymous]
         public async Task<ActionResult<Response>> GetProductById(int productId)
         {
             try
@@ -99,6 +103,7 @@ namespace Mango.Services.ProductAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [Authorize(Roles = "Admin,MasterAdmin")]
         public async Task<ActionResult<Response>> CreateProduct(ProductDTO req)
         {
             try
@@ -135,6 +140,7 @@ namespace Mango.Services.ProductAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [Authorize(Roles = "Admin,MasterAdmin")]
         public async Task<ActionResult<Response>> UpdateProduct(ProductDTO req)
         {
             try
@@ -170,6 +176,7 @@ namespace Mango.Services.ProductAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [Authorize(Roles = "Admin,MasterAdmin")]
         public async Task<ActionResult<Response>> DeleteProduct(int id)
         {
             try

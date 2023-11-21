@@ -2,7 +2,10 @@ using Mango.Services.ProductAPI;
 using Mango.Services.ProductAPI.Data;
 using Mango.Services.ProductAPI.Service;
 using Mango.Services.ProductAPI.Service.IService;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +24,28 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => {
     options.UseSqlServer(builder.Configuration.GetConnectionString("CouponConnection"));
 });
 
+//config
+var apiConfig = builder.Configuration.GetSection("ApiSettings:JwtOptions");
+var secret = Encoding.ASCII.GetBytes(apiConfig.GetValue<string>("SecretKey"));
+var issuer = apiConfig.GetValue<string>("Issuer");
+var audience = apiConfig.GetValue<string>("Audience");
+//authentication
+builder.Services.AddAuthentication(options => { 
+
+    options.DefaultAuthenticateScheme=JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme=JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options => {
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = issuer,
+        ValidateAudience = true,
+        ValidAudience = audience,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey=new SymmetricSecurityKey(secret),
+    };
+});
+
 //injecting services
 builder.Services.AddScoped<IProductService, ProductService>();
 
@@ -35,6 +60,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
